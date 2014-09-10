@@ -1,0 +1,122 @@
+package roman
+
+import "errors"
+
+// 罗马数字的各位的三元组表示
+// 依次为个、十、百位的1、5、10
+// 作为一个变量存在，以便用户定制
+var Units = []string{"IVX", "XLC", "CDM"}
+
+// 当提供的整数超出表示范围时，FormatRoman会返回本错误
+var OutofRange = errors.New("Out Of Roman-Number Range")
+
+// ParseRoman会返回本类型的错误，其值表示扫描终止的位置
+type PlaceError int
+
+func (p PlaceError) Error() string {
+	if p == 0 {
+		return "Bad Roman-Syntax"
+	}
+	return "With Trailing Bytes"
+}
+
+// 解析一个罗马数字字符串，返回该数字和可能的错误。
+// 如果字符串s在罗马数字之后仍有字符，会返回该数字和一个错误；
+// 如果字符串s的格式错误，会返回0和该错误（罗马数字不能表示0）
+func ParseRoman(s string) (uint, error) {
+	ls, lu := len(s), len(Units)
+	jw := make([]int, lu+1)
+	i, j, p := 0, 0, 0
+	if cur := Units[lu-1][2]; s[p] == cur {
+		for ; p < ls && s[p] == cur; p++ {
+			j++
+		}
+		jw[0] = j
+	}
+	if p < ls {
+		for t := 1; t <= lu; t++ {
+			unit := Units[lu-t]
+			cur, hlf, abv := unit[0], unit[1], unit[2]
+			if s[p] == cur {
+				if p++; p >= ls {
+					jw[t] = 1
+					break
+				}
+				if s[p] == hlf {
+					p, jw[t] = p+1, 4
+				} else if s[p] == abv {
+					p, jw[t] = p+1, 9
+				} else {
+					for i, j = 0, 1; i < 2 && p < ls && s[p] == cur; i, p = i+1, p+1 {
+						j++
+					}
+					jw[t] = j
+				}
+			} else if s[p] == hlf {
+				if p++; p >= ls {
+					jw[t] = 5
+					break
+				}
+				for i, j = 0, 5; i < 3 && p < ls && s[p] == cur; i, p = i+1, p+1 {
+					j++
+				}
+				jw[t] = j
+			}
+			if p >= ls {
+				break
+			}
+		}
+	}
+	if p == 0 {
+		return 0, PlaceError(p)
+	}
+	j = 0
+	for _, i = range jw {
+		j = j*10 + i
+	}
+	if p < ls {
+		return uint(j), PlaceError(p)
+	}
+	return uint(j), nil
+}
+
+// 返回一个无符号整数的罗马数字表示和可能的错误
+// 如果参数i等于0或者超出表示范围（一般为4000），
+// 会返回空字符串和一个错误。
+func FormatRoman(i uint) (string, error) {
+	lu := len(Units)
+	j, t := 1, 0
+	for ; t < lu; t++ {
+		j *= 10
+	}
+	if i >= 4*uint(j) || i == 0 {
+		return "", OutofRange
+	}
+	sr := make([]byte, 0, 3*lu+3)
+	cur := Units[lu-1][2]
+	for t = int(i) / j; t > 0; t-- {
+		sr = append(sr, cur)
+	}
+	for t, j = 1, j/10; t <= lu; t, j = t+1, j/10 {
+		unit := Units[lu-t]
+		cur, hlf, abv := unit[0], unit[1], unit[2]
+		switch x := int(i) / j % 10; {
+		case x == 9:
+			sr = append(sr, cur)
+			sr = append(sr, abv)
+		case x >= 5:
+			sr = append(sr, hlf)
+			for x -= 5; x > 0; x-- {
+				sr = append(sr, cur)
+			}
+		case x == 4:
+			sr = append(sr, cur)
+			sr = append(sr, hlf)
+		case x <= 3:
+			for ; x > 0; x-- {
+				sr = append(sr, cur)
+			}
+		}
+	}
+	return string(sr), nil
+}
