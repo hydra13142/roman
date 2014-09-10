@@ -93,7 +93,7 @@ func FormatRoman(i uint) (string, error) {
 	if i >= 4*uint(j) || i == 0 {
 		return "", OutofRange
 	}
-	sr := make([]rune, 0, 3*lu+3)
+	sr := make([]rune, 0, 4*lu+3)
 	cur := Units[lu-1][2]
 	for t = int(i) / j; t > 0; t-- {
 		sr = append(sr, cur)
