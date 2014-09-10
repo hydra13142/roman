@@ -5,7 +5,7 @@ import "errors"
 // 罗马数字的各位的三元组表示
 // 依次为个、十、百位的1、5、10
 // 作为一个变量存在，以便用户定制
-var Units = []string{"IVX", "XLC", "CDM"}
+var Units = [][3]rune{{'I', 'V', 'X'}, {'X', 'L', 'C'}, {'C', 'D', 'M'}}
 
 // 当提供的整数超出表示范围时，FormatRoman会返回本错误
 var OutofRange = errors.New("Out Of Roman-Number Range")
@@ -24,11 +24,12 @@ func (p PlaceError) Error() string {
 // 如果字符串s在罗马数字之后仍有字符，会返回该数字和一个错误；
 // 如果字符串s的格式错误，会返回0和该错误（罗马数字不能表示0）
 func ParseRoman(s string) (uint, error) {
-	ls, lu := len(s), len(Units)
+	sr := []rune(s)
+	ls, lu := len(sr), len(Units)
 	jw := make([]int, lu+1)
 	i, j, p := 0, 0, 0
-	if cur := Units[lu-1][2]; s[p] == cur {
-		for ; p < ls && s[p] == cur; p++ {
+	if cur := Units[lu-1][2]; sr[p] == cur {
+		for ; p < ls && sr[p] == cur; p++ {
 			j++
 		}
 		jw[0] = j
@@ -37,27 +38,27 @@ func ParseRoman(s string) (uint, error) {
 		for t := 1; t <= lu; t++ {
 			unit := Units[lu-t]
 			cur, hlf, abv := unit[0], unit[1], unit[2]
-			if s[p] == cur {
+			if sr[p] == cur {
 				if p++; p >= ls {
 					jw[t] = 1
 					break
 				}
-				if s[p] == hlf {
+				if sr[p] == hlf {
 					p, jw[t] = p+1, 4
-				} else if s[p] == abv {
+				} else if sr[p] == abv {
 					p, jw[t] = p+1, 9
 				} else {
-					for i, j = 0, 1; i < 2 && p < ls && s[p] == cur; i, p = i+1, p+1 {
+					for i, j = 0, 1; i < 2 && p < ls && sr[p] == cur; i, p = i+1, p+1 {
 						j++
 					}
 					jw[t] = j
 				}
-			} else if s[p] == hlf {
+			} else if sr[p] == hlf {
 				if p++; p >= ls {
 					jw[t] = 5
 					break
 				}
-				for i, j = 0, 5; i < 3 && p < ls && s[p] == cur; i, p = i+1, p+1 {
+				for i, j = 0, 5; i < 3 && p < ls && sr[p] == cur; i, p = i+1, p+1 {
 					j++
 				}
 				jw[t] = j
@@ -92,7 +93,7 @@ func FormatRoman(i uint) (string, error) {
 	if i >= 4*uint(j) || i == 0 {
 		return "", OutofRange
 	}
-	sr := make([]byte, 0, 3*lu+3)
+	sr := make([]rune, 0, 3*lu+3)
 	cur := Units[lu-1][2]
 	for t = int(i) / j; t > 0; t-- {
 		sr = append(sr, cur)
